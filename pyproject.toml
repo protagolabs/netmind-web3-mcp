@@ -1,0 +1,15 @@
+[project]
+name = "netmind-web3-mcp"
+version = "0.1.0"
+description = "Netmind web3 mcp tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.22.0",
+]
+
+packages = [{ include = "src/netmind-web3-mcp" }]
+
+[tool.poetry.scripts]
+netmind-web3-mcp = "netmind-web3-mcp:main"
