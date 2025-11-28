@@ -23,7 +23,7 @@ This is an **MCP (Model Context Protocol)** server, that provide some web3 tools
       },
       "command": "uvx",
       "args": [
-        "netmind-web3-mcp"
+        "git+https://github.com/protagolabs/netmind-web3-mcp.git"
       ]
     }
   }
