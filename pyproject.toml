@@ -8,3 +8,6 @@ dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.22.0",
 ]
+
+[project.scripts]
+netmind-web3-mcp = "netmind_web3_mcp.server:main"
