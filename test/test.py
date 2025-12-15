@@ -9,8 +9,8 @@ server = StdioServerParameters(
     args=['src/netmind_web3_mcp/server.py'],
     env={
         # 
-        "BACKEND_URL": "https://xyz-api.protago-dev.com/tokenAddress/queryTokenAddressList",
-        "COINGECKO_API_KEY": "CG-dkuNv3fGtwfvnhZWuRkREvpe",
+        "BACKEND_URL": "*****",
+        "COINGECKO_API_KEY": "*****",
         }   
 )
 
