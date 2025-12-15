@@ -7,6 +7,8 @@ This is an **MCP (Model Context Protocol)** server, that provide some web3 tools
 
 ### Environment Variables
 - `BACKEND_URL`: The Backend URL.
+- `COINGECKO_API_KEY`: CoinGecko Pro API Key (required for `query_coingecko_market_data` tool).
+
 
 
 ### Tools
