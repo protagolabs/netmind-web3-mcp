@@ -6,10 +6,11 @@ import asyncio
 
 server = StdioServerParameters(
     command='python3',
-    args=['src/backend/server.py'],
+    args=['src/netmind_web3_mcp/server.py'],
     env={
         # 
-        "BACKEND_URL": "{your_backend_url}",
+        "BACKEND_URL": "https://xyz-api.protago-dev.com/tokenAddress/queryTokenAddressList",
+        "COINGECKO_API_KEY": "CG-dkuNv3fGtwfvnhZWuRkREvpe",
         }   
 )
 
@@ -21,15 +22,29 @@ async def main():
             await session.initialize()
             response = await session.list_tools()
             tools = [dict(t) for t in response.tools]
-            print(json.dumps(tools, indent=4, ensure_ascii=False))
+            #print(json.dumps(tools, indent=4, ensure_ascii=False))
             tools_to_call = [
-                    ('query_token_addressList', 
-                     #
+                    # ('query_token_addressList', 
+                    #  #
+                    #  {
+                    #      'tokenName': "USDT",
+                    #     # 'tokenAddress': "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+                    #  }
+                    # ),
+                    # ('query_coingecko_market_data', 
+                    #  {
+                    #      "ids": "bitcoin",
+                    #      "vs_currency": "usd",
+                    #      "price_change_percentage": "1h"
+                    #  }
+                    # ),
+                    ('query_coingecko_market_data', 
                      {
-                         'tokenName': "USDT",
-                        # 'tokenAddress': "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+                         "ids": "bitcoin,ethereum,solana,cardano,polkadot",
+                         "vs_currency": "usd",
+                         "price_change_percentage": "1h,24h,7d"
                      }
-                    )         
+                    )
                 ]
             
             for tool_name, args in tools_to_call:
