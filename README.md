@@ -21,7 +21,8 @@ This is an **MCP (Model Context Protocol)** server, that provide some web3 tools
   "mcpServers": {
     "netmind-web3-mcp": {
       "env": {
-        "BACKEND_URL": "",
+        "BACKEND_URL": "***",
+        "COINGECKO_API_KEY":"***"
       },
       "command": "uvx",
       "args": [
