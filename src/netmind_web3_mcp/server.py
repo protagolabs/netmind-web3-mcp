@@ -148,7 +148,7 @@ async def query_coingecko_market_data(
                     "vs_currency": vs_currency,
                     "from": from_date,
                     "to": to_date,
-                    "interval": "daily"
+                    "interval": "hourly"
                 }
                 ohlc_response = await client.get(ohlc_url, params=ohlc_params, headers=headers, timeout=20.0)
                 ohlc_response.raise_for_status()
