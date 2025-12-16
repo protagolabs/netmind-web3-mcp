@@ -79,8 +79,7 @@ async def query_coingecko_market_data(
         precision: Decimal place for currency price value. Options: full, 0-18. Default: full.
     
     Returns:
-        JSON string containing market data with an additional "ohlc_7d" field for each coin.
-        The OHLC data format: [[timestamp, open, high, low, close], ...]
+        A list of coins with their market data and history chart data. 
     """
     
     apiKey = os.environ.get("COINGECKO_API_KEY")
@@ -121,7 +120,7 @@ async def query_coingecko_market_data(
     }
     
     # Get market data
-    response = httpx.get(baseUrl, params=params, headers=headers, timeout=20.0)
+    response = httpx.get(baseUrl, params=params, headers=headers, timeout=10.0)
     response.raise_for_status()
     market_data = response.json()
     
@@ -134,32 +133,30 @@ async def query_coingecko_market_data(
     # Limit concurrent requests to avoid rate limiting (max 10 concurrent)
     semaphore = asyncio.Semaphore(10)
     
-    # Fetch OHLC data for all coins concurrently
-    async def fetch_ohlc(client, coin):
+    # Fetch history chart data for all coins concurrently
+    async def fetch_history_chart(client, coin, headers, vs_currency):
         coin_id = coin.get("id")
         if not coin_id:
-            coin["ohlc_7d"] = []
+            coin["history_chart"] = []
             return
         
         async with semaphore:
             try:
-                ohlc_url = f"https://pro-api.coingecko.com/api/v3/coins/{coin_id}/ohlc/range"
-                ohlc_params = {
+                history_chart_url = f"https://pro-api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+                history_chart_params = {
                     "vs_currency": vs_currency,
-                    "from": from_date,
-                    "to": to_date,
-                    "interval": "hourly"
+                    "days": 7
                 }
-                ohlc_response = await client.get(ohlc_url, params=ohlc_params, headers=headers, timeout=20.0)
-                ohlc_response.raise_for_status()
-                coin["ohlc_7d"] = ohlc_response.json()
+                history_chart_response = await client.get(history_chart_url, params=history_chart_params, headers=headers, timeout=10.0)
+                history_chart_response.raise_for_status()
+                coin["history_chart"] = history_chart_response.json()
             except Exception:
-                # If OHLC fetch fails for any reason, set to empty array
-                coin["ohlc_7d"] = []
+                # If history chart fetch fails for any reason, set to empty array
+                coin["history_chart"] = []
     
-    # Execute all OHLC requests concurrently using a shared client
+    # Execute all history chart requests concurrently using a shared client
     async with httpx.AsyncClient() as client:
-        await asyncio.gather(*[fetch_ohlc(client, coin) for coin in market_data])
+        await asyncio.gather(*[fetch_history_chart(client, coin, headers, vs_currency) for coin in market_data])
     
     return json.dumps(market_data, indent=2)
 
