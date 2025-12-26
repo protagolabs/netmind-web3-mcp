@@ -1,179 +1,62 @@
-import httpx
+"""Main MCP server for Netmind Web3 tools."""
+
 import os
-import json
-import asyncio
-from datetime import datetime, timedelta
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
+from .tools import query_token_addressList, query_coingecko_market_data
+from .tools.backend.config import BackendConfig
+from .tools.coingecko.config import CoinGeckoConfig
+from .utils.env_loader import load_env_file
 
 
-mcp = FastMCP("netmind-web3-mcp")
-
-
-@mcp.tool()
-async def query_token_addressList(tokenName: str = None, tokenAddress: str = None) -> str:
-    """Query address list based on token name or address.
-     
-    Args:
-    tokenName: Symbol of the token
-    tokenAddress: Address of the token
+def _create_mcp_instance():
+    """Create FastMCP instance with configuration from environment variables.
     
-    At least one of tokenName or tokenAddress must be provided.
+    Note: host and port are only used for SSE transport mode.
+    For stdio transport, these parameters are ignored.
     """
+    # Only read host/port if SSE transport is used (or default values for stdio)
+    host = os.environ.get("MCP_HOST", "127.0.0.1")
+    port = int(os.environ.get("MCP_PORT", "8000"))
     
-    if not tokenName and not tokenAddress:
-        raise ValueError("At least one of tokenName or tokenAddress must be provided")
-    
-    baseUrl = os.environ.get("BACKEND_URL")
-    if not baseUrl:
-        raise ValueError("BACKEND_URL environment variable is not set")
-    
-    params = []
-    if tokenName:   
-        params.append(f"tokenName={tokenName}")
-    if tokenAddress:
-        params.append(f"tokenAddress={tokenAddress}")
-    
-    if params:
-        baseUrl += "?" + "&".join(params)
-    
-    response = httpx.get(baseUrl, timeout=10.0)
-    response.raise_for_status()
-    return response.text
+    mcp = FastMCP("netmind-web3-mcp", host=host, port=port)
+    mcp.tool()(query_token_addressList)
+    mcp.tool()(query_coingecko_market_data)
+    return mcp
 
-@mcp.tool()
-async def query_coingecko_market_data(
-    vs_currency: str = "usd",
-    ids: str = None,
-    names: str = None,
-    symbols: str = None,
-    include_tokens: str = "top",
-    category: str = None,
-    order: str = "market_cap_desc",
-    per_page: int = 100,
-    page: int = 1,
-    price_change_percentage: str = "1h",
-    locale: str = "en",
-    precision: str = None,
-) -> str:
-    """Query CoinGecko for cryptocurrency market data with OHLC data.
-    
-    This function fetches market data and also includes OHLC (Open, High, Low, Close) data 
-    for the past 7 days for each coin.
-    
-    References:
-    - Market Data: https://docs.coingecko.com/reference/coins-markets
-    - OHLC Data: https://docs.coingecko.com/reference/coins-id-ohlc-range
 
-    Args:
-        vs_currency: The target currency of the market data (e.g., "usd", "eur"). Required.
-        ids: The IDs of the coins to fetch, comma-separated if querying more than 1 coin (e.g., "bitcoin,ethereum").
-        names: The names of the coins to fetch, comma-separated (e.g., "Bitcoin,Ethereum"). URL-encode spaces.
-        symbols: The symbols of the coins to fetch, comma-separated (e.g., "btc,eth").
-        include_tokens: For symbols lookups, specify "all" to include all matching tokens. Default "top" returns top-ranked tokens.
-        category: Filter based on coins' category (e.g., "layer-1"). Refer to /coins/categories/list for available categories.
-        order: Sort result by field. Options: market_cap_asc, market_cap_desc, volume_asc, volume_desc, id_asc, id_desc. Default: market_cap_desc.
-        per_page: Total results per page. Valid values: 1-250. Default: 100.
-        page: Page through results. Default: 1.
-        price_change_percentage: Include price change percentage timeframe, comma-separated if query more than 1 timeframe. Valid values: 1h, 24h, 7d, 14d, 30d, 200d, 1y. Default: 1h.
-        locale: Language background. Default: en.
-        precision: Decimal place for currency price value. Options: full, 0-18. Default: full.
+def _check_required_env_vars():
+    """Check if all required environment variables are set.
     
-    Returns:
-        A list of coins with their market data and history chart data. 
+    This function is called by the startup script and server main function.
+    Add new module checks here when adding new data sources.
     """
-    
-    apiKey = os.environ.get("COINGECKO_API_KEY")
-    if not apiKey:
-        raise ValueError("COINGECKO_API_KEY environment variable is not set")
+    BackendConfig.check_env()
+    CoinGeckoConfig.check_env()
 
-    baseUrl = "https://pro-api.coingecko.com/api/v3/coins/markets"
-    params = {
-        "vs_currency": vs_currency,
-    }
-    
-    # Add optional parameters
-    if ids:
-        params["ids"] = ids
-    if names:
-        params["names"] = names
-    if symbols:
-        params["symbols"] = symbols
-        params["include_tokens"] = include_tokens
-    if category:
-        params["category"] = category
-    if order:
-        params["order"] = order
-    if per_page:
-        params["per_page"] = per_page
-    if page:
-        params["page"] = page
-    if price_change_percentage:
-        params["price_change_percentage"] = price_change_percentage
-    if locale:
-        params["locale"] = locale
-    if precision:
-        params["precision"] = precision
 
-    # API key should be passed via header, not query parameter
-    headers = {
-        "x-cg-pro-api-key": apiKey
-    }
-    
-    # Get market data
-    response = httpx.get(baseUrl, params=params, headers=headers, timeout=10.0)
-    response.raise_for_status()
-    market_data = response.json()
-    
-    # Calculate date range: 7 days ago to today
-    today = datetime.now()
-    seven_days_ago = today - timedelta(days=7)
-    from_date = seven_days_ago.strftime("%Y-%m-%d")
-    to_date = today.strftime("%Y-%m-%d")
-    
-    # Limit concurrent requests to avoid rate limiting (max 10 concurrent)
-    semaphore = asyncio.Semaphore(10)
-    
-    # Fetch history chart data for all coins concurrently
-    async def fetch_history_chart(client, coin, headers, vs_currency):
-        coin_id = coin.get("id")
-        if not coin_id:
-            coin["history_chart"] = []
-            return
-        
-        async with semaphore:
-            try:
-                history_chart_url = f"https://pro-api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
-                history_chart_params = {
-                    "vs_currency": vs_currency,
-                    "days": 7
-                }
-                history_chart_response = await client.get(history_chart_url, params=history_chart_params, headers=headers, timeout=10.0)
-                history_chart_response.raise_for_status()
-                coin["history_chart"] = history_chart_response.json()
-            except Exception:
-                # If history chart fetch fails for any reason, set to empty array
-                coin["history_chart"] = []
-    
-    # Execute all history chart requests concurrently using a shared client
-    async with httpx.AsyncClient() as client:
-        await asyncio.gather(*[fetch_history_chart(client, coin, headers, vs_currency) for coin in market_data])
-    
-    return json.dumps(market_data, indent=2)
+# Module-level instance (for testing and import access)
+# Created when module is imported, using current environment variables
+mcp = _create_mcp_instance()
 
 
 def main():
-    if not os.environ.get("BACKEND_URL"):
-        raise ValueError(
-            "Environment variable BACKEND_URL is not set. Please set it."
-        )
+    """Start the MCP server.
     
-    if not os.environ.get("COINGECKO_API_KEY"):
-        raise ValueError(
-            "Environment variable COINGECKO_API_KEY is not set. Please set it."
-        )
+    Automatically loads environment variables from .env file if it exists.
+    Uses the module-level mcp instance, which is created with current environment variables.
+    """
+    # Load environment variables from .env file
+    # Detect project root: server.py -> netmind_web3_mcp/ -> src/ -> project_root
+    current_file = Path(__file__)
+    project_root = current_file.parent.parent.parent
+    load_env_file(project_root=project_root)
     
-    print("Starting Netmind Web3 MCP server...")
-    mcp.run(transport='stdio')
+    _check_required_env_vars()
+    
+    transport = os.environ.get("MCP_TRANSPORT", "sse")
+    mcp.run(transport=transport)
+
 
 if __name__ == "__main__":
     main()
