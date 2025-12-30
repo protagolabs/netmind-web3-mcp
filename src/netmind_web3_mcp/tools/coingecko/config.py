@@ -10,8 +10,8 @@ class CoinGeckoConfig:
     """Configuration manager for CoinGecko API."""
     
     @classmethod
-    def check_env(cls) -> None:
-        """Check if required environment variables are set."""
+    def validate_required_env(cls) -> None:
+        """Validate that all required environment variables are set."""
         if not os.environ.get("COINGECKO_API_KEY"):
             print("Error: COINGECKO_API_KEY environment variable is not set", file=sys.stderr)
             sys.exit(1)

@@ -10,6 +10,12 @@ This directory contains test cases for the Netmind Web3 MCP server, organized by
   ```
 
 - **`test_sse.py`**: Test tools via SSE server (local or remote)
+
+- **`test_mcp_inspector.py`**: Wrapper script for `mcp dev` command to start Inspector with automatic server startup
+  ```bash
+  mcp dev test/test_mcp_inspector.py
+  ```
+  This script automatically starts the server in the background, so Inspector can connect immediately.
   
   **For local server:**
   1. Edit `test_sse.py` and set `SSE_URL = "http://127.0.0.1:8000/sse"` (default)

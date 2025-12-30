@@ -2,13 +2,6 @@
 
 This test connects to an SSE server (local or remote).
 Edit the SSE_URL variable below to point to your server.
-
-Examples:
-    # Local server (default)
-    SSE_URL = "http://127.0.0.1:8000/sse"
-    
-    # Remote server
-    SSE_URL = "https://your-remote-server.com/sse"
 """
 
 import json
@@ -113,71 +106,189 @@ async def main():
                 
                 # Test cases
                 test_cases = [
+                    # {
+                    #     "name": "query_token_addressList",
+                    #     "tool": "query_token_addressList",
+                    #     "args": {
+                    #         "tokenName": "USDT"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_coingecko_market_data (single coin)",
+                    #     "tool": "query_coingecko_market_data",
+                    #     "args": {
+                    #         "ids": "bitcoin",
+                    #         "vs_currency": "usd",
+                    #         "price_change_percentage": "1h"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_coingecko_market_data (multiple coins)",
+                    #     "tool": "query_coingecko_market_data",
+                    #     "args": {
+                    #         "ids": "bitcoin,ethereum,solana,cardano,polkadot",
+                    #         "vs_currency": "usd",
+                    #         "price_change_percentage": "1h,24h,7d"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_quote",
+                    #     "tool": "query_sugar_get_quote",
+                    #     "args": {
+                    #         "from_token": "usdc",
+                    #         "to_token": "aero",
+                    #         "amount": 1000000000000000,
+                    #         "chainId": "8453",
+                    #         "use_cache": True
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_token_list",
+                    #     "tool": "query_sugar_get_all_tokens",
+                    #     "args": {
+                    #         "limit": 10,
+                    #         "offset": 0,
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_token_prices",
+                    #     "tool": "query_sugar_get_token_prices",
+                    #     "args": {
+                    #         "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_prices",
+                    #     "tool": "query_sugar_get_prices",
+                    #     "args": {
+                    #         "limit": 10,
+                    #         "offset": 0,
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_latest_pool_epochs",
+                    #     "tool": "query_sugar_get_latest_pool_epochs",
+                    #     "args": {
+                    #         "offset": 0,
+                    #         "limit": 10,
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_pool_epochs",
+                    #     "tool": "query_sugar_get_pool_epochs",
+                    #     "args": {
+                    #         "lp": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
+                    #         "offset": 0,
+                    #         "limit": 10,    
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_pools",
+                    #     "tool": "query_sugar_get_pools",
+                    #     "args": {
+                    #          "limit": 10,   
+                    #          "offset": 0,
+                    #          "chainId": "8453"
+                    #     }
+                    # },
                     {
-                        "name": "query_token_addressList",
-                        "tool": "query_token_addressList",
+                        "name": "query_sugar_get_pool_by_address",
+                        "tool": "query_sugar_get_pool_by_address",
                         "args": {
-                            "tokenName": "USDT"
+                            "address": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
+                            "chainId": "8453"
+                        }
+                    },
+                    # {
+                    #     "name": "query_sugar_get_pools_for_swaps",
+                    #     "tool": "query_sugar_get_pools_for_swaps",
+                    #     "args": {
+                    #         "limit": 10,
+                    #         "offset": 0,
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    {
+                        "name": "query_sugar_get_pools_by_token",
+                        "tool": "query_sugar_get_pools_by_token",
+                        "args": {
+                            "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                            "chainId": "8453"
                         }
                     },
                     {
-                        "name": "query_coingecko_market_data (single coin)",
-                        "tool": "query_coingecko_market_data",
+                        "name": "query_sugar_get_pools_by_pair",
+                        "tool": "query_sugar_get_pools_by_pair",
                         "args": {
-                            "ids": "bitcoin",
-                            "vs_currency": "usd",
-                            "price_change_percentage": "1h"
+                            "token0_address": "0x4200000000000000000000000000000000000006",
+                            "token1_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                            "chainId": "8453"
                         }
-                    },
-                    {
-                        "name": "query_coingecko_market_data (multiple coins)",
-                        "tool": "query_coingecko_market_data",
-                        "args": {
-                            "ids": "bitcoin,ethereum,solana,cardano,polkadot",
-                            "vs_currency": "usd",
-                            "price_change_percentage": "1h,24h,7d"
-                        }
-                    },
+                    },  
+                    # {
+                    #     "name": "query_sugar_get_pool_list",
+                    #     "tool": "query_sugar_get_pool_list",
+                    #     "args": {
+                    #         "chainId": "8453"
+                    #     }
+                    # }
                 ]
                 
                 for test_case in test_cases:
-                    print(f"\n{'=' * 60}")
-                    print(f"🛠️  Testing: {test_case['name']}")
-                    print(f"{'=' * 60}")
                     try:
-                        response = await session.call_tool(
-                            test_case["tool"],
-                            arguments=test_case["args"]
-                        )
-                        
-                        print("✅ Tool call succeeded!")
-                        result_text = response.content[0].text
+                        # Call tool; newer mcp clients may return a structured CallToolResult
+                        result = await session.call_tool(test_case["tool"], arguments=test_case["args"])
+
+                        # Normalize result into a JSON-serializable Python object
+                        result_obj = None
+                        try:
+                            if isinstance(result, (dict, list, str, int, float, bool)) or result is None:
+                                result_obj = result
+                            elif hasattr(result, "model_dump_json"):
+                                # Pydantic v2 style
+                                result_obj = json.loads(result.model_dump_json())
+                            elif hasattr(result, "model_dump"):
+                                # Pydantic v2 dict
+                                result_obj = result.model_dump()
+                            elif hasattr(result, "json"):
+                                # Pydantic v1 style
+                                result_obj = json.loads(result.json())
+                            else:
+                                # Fallback: best-effort serialization
+                                result_obj = json.loads(json.dumps(result, default=lambda o: getattr(o, "__dict__", str(o))))
+                        except Exception:
+                            # As a last resort, store string representation
+                            result_obj = str(result)
                         
                         # Save full result to file to avoid truncation
                         output_file = f"test_output_{test_case['tool']}.json"
                         with open(output_file, 'w', encoding='utf-8') as f:
-                            try:
-                                result_json = json.loads(result_text)
-                                json.dump(result_json, f, indent=2, ensure_ascii=False)
-                            except json.JSONDecodeError:
-                                f.write(result_text)
+                            if isinstance(result_obj, (dict, list)):
+                                json.dump(result_obj, f, indent=2, ensure_ascii=False)
+                            else:
+                                f.write(str(result_obj))
                         
                         print(f"📄 Full result saved to: {output_file}")
                         
                         # Show summary
-                        try:
-                            result_json = json.loads(result_text)
-                            if isinstance(result_json, list):
-                                print(f"📊 Result: {len(result_json)} items")
-                                if len(result_json) > 0:
-                                    print(f"📄 First item preview:")
-                                    print(json.dumps(result_json[0], indent=2, ensure_ascii=False)[:500])
-                            elif isinstance(result_json, dict):
-                                print(f"📊 Result keys: {list(result_json.keys())[:10]}")
-                                print(f"📄 Preview:")
-                                print(json.dumps(result_json, indent=2, ensure_ascii=False)[:500])
-                        except json.JSONDecodeError:
-                            print(f"📄 Result preview: {result_text[:500]}...")
+                        if isinstance(result_obj, list):
+                            print(f"📊 Result: {len(result_obj)} items")
+                            if len(result_obj) > 0:
+                                print(f"📄 First item preview:")
+                                print(json.dumps(result_obj[0], indent=2, ensure_ascii=False)[:500])
+                        elif isinstance(result_obj, dict):
+                            print(f"📊 Result keys: {list(result_obj.keys())[:10]}")
+                            print(f"📄 Preview:")
+                            print(json.dumps(result_obj, indent=2, ensure_ascii=False)[:500])
+                        else:
+                            # Fallback preview for non-JSON-like results
+                            preview_text = str(result_obj)
+                            print(f"📄 Result preview: {preview_text[:500]}...")
                         
                     except Exception as e:
                         print(f"❌ Tool call failed: {e}")

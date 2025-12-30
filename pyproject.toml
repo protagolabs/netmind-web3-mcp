@@ -1,13 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "netmind-web3-mcp"
-version = "0.1.0"
+version = "1.0.0"
 description = "Netmind web3 mcp tools"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.22.0",
+    "netmind-sugar",
+    "web3>=6.0.0",
+    "pydantic>=2.0.0",
 ]
 
 [project.scripts]
 netmind-web3-mcp = "netmind_web3_mcp.server:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

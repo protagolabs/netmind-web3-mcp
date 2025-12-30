@@ -3,9 +3,26 @@
 import os
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
-from .tools import query_token_addressList, query_coingecko_market_data
+from .tools import (
+    query_token_addressList,
+    query_coingecko_market_data,
+    query_sugar_get_all_tokens,
+    query_sugar_get_token_prices,
+    query_sugar_get_prices,
+    query_sugar_get_pools,
+    query_sugar_get_pool_by_address,
+    query_sugar_get_pools_for_swaps,
+    query_sugar_get_pools_by_token,
+    query_sugar_get_pools_by_pair,
+    query_sugar_get_pool_list,
+    query_sugar_get_latest_pool_epochs,
+    query_sugar_get_pool_epochs,
+    query_sugar_get_quote,
+)
 from .tools.backend.config import BackendConfig
 from .tools.coingecko.config import CoinGeckoConfig
+from .tools.sugar.config import SugarConfig
+from .tools.sugar.cache import ensure_cache_system_started
 from .utils.env_loader import load_env_file
 
 
@@ -20,19 +37,39 @@ def _create_mcp_instance():
     port = int(os.environ.get("MCP_PORT", "8000"))
     
     mcp = FastMCP("netmind-web3-mcp", host=host, port=port)
+    
+    # Register backend tools
     mcp.tool()(query_token_addressList)
+    
+    # Register CoinGecko tools
     mcp.tool()(query_coingecko_market_data)
+    
+    # Register Sugar MCP tools
+    mcp.tool()(query_sugar_get_all_tokens)
+    mcp.tool()(query_sugar_get_token_prices)
+    mcp.tool()(query_sugar_get_prices)
+    mcp.tool()(query_sugar_get_pools)
+    mcp.tool()(query_sugar_get_pool_by_address)
+    mcp.tool()(query_sugar_get_pools_for_swaps)
+    mcp.tool()(query_sugar_get_pools_by_token)
+    mcp.tool()(query_sugar_get_pools_by_pair)
+    mcp.tool()(query_sugar_get_pool_list)
+    mcp.tool()(query_sugar_get_latest_pool_epochs)
+    mcp.tool()(query_sugar_get_pool_epochs)
+    mcp.tool()(query_sugar_get_quote)
+    
     return mcp
 
 
-def _check_required_env_vars():
-    """Check if all required environment variables are set.
+def _validate_required_env_vars():
+    """Validate that all required environment variables are set.
     
     This function is called by the startup script and server main function.
     Add new module checks here when adding new data sources.
     """
-    BackendConfig.check_env()
-    CoinGeckoConfig.check_env()
+    BackendConfig.validate_required_env()
+    CoinGeckoConfig.validate_required_env()
+    SugarConfig.validate_required_env()
 
 
 # Module-level instance (for testing and import access)
@@ -52,7 +89,10 @@ def main():
     project_root = current_file.parent.parent.parent
     load_env_file(project_root=project_root)
     
-    _check_required_env_vars()
+    _validate_required_env_vars()
+    
+    # Eagerly initialize Sugar cache system on server startup
+    ensure_cache_system_started()
     
     transport = os.environ.get("MCP_TRANSPORT", "sse")
     mcp.run(transport=transport)

@@ -9,8 +9,8 @@ class BackendConfig:
     """Configuration manager for backend API."""
     
     @classmethod
-    def check_env(cls) -> None:
-        """Check if required environment variables are set."""
+    def validate_required_env(cls) -> None:
+        """Validate that all required environment variables are set."""
         if not os.environ.get("BACKEND_URL"):
             print("Error: BACKEND_URL environment variable is not set", file=sys.stderr)
             sys.exit(1)
