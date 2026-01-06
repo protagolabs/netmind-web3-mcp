@@ -44,7 +44,7 @@ This directory contains test cases for the Netmind Web3 MCP server, organized by
 
 All tests require the following environment variables to be set:
 
-- `BACKEND_URL`: Backend API URL for token address queries
+- `BACKEND_BASE_URL`: Backend API base URL (domain only, route path is appended in code)
 - `COINGECKO_API_KEY`: CoinGecko Pro API key
 
 **All environment variables should be configured in the `.env` file in the project root.**
@@ -56,7 +56,7 @@ All tests require the following environment variables to be set:
 
 2. Edit `.env` and fill in your actual values:
    ```bash
-   BACKEND_URL=https://your-backend-api.com/tokenAddress/queryTokenAddressList
+   BACKEND_BASE_URL=https://your-backend-api.com
    COINGECKO_API_KEY=CG-your-actual-api-key
    ```
 

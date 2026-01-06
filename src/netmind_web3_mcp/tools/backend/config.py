@@ -11,17 +11,21 @@ class BackendConfig:
     @classmethod
     def validate_required_env(cls) -> None:
         """Validate that all required environment variables are set."""
-        if not os.environ.get("BACKEND_URL"):
-            print("Error: BACKEND_URL environment variable is not set", file=sys.stderr)
+        if not os.environ.get("BACKEND_BASE_URL"):
+            print("Error: BACKEND_BASE_URL environment variable is not set", file=sys.stderr)
             sys.exit(1)
     
     def __init__(self):
-        self.base_url: Optional[str] = os.environ.get("BACKEND_URL")
+        self.base_url: Optional[str] = os.environ.get("BACKEND_BASE_URL")
         self.timeout: float = float(os.environ.get("BACKEND_TIMEOUT", "10.0"))
         
         if not self.base_url:
-            print("Error: BACKEND_URL environment variable is not set", file=sys.stderr)
+            print("Error: BACKEND_BASE_URL environment variable is not set", file=sys.stderr)
             sys.exit(1)
+        
+        # Ensure base_url doesn't end with a slash
+        if self.base_url.endswith("/"):
+            self.base_url = self.base_url.rstrip("/")
     
     def get_base_url(self) -> str:
         return self.base_url

@@ -1,5 +1,6 @@
 """Sugar MCP pool-related tools."""
 
+from typing import Optional
 from netmind_sugar.chains import get_chain, LiquidityPool, LiquidityPoolForSwap
 from web3 import Web3
 from .models import (
@@ -25,19 +26,6 @@ def _safe_get_amount_in_stable(amount_obj, default=0.0):
     if hasattr(amount_obj, 'amount_in_stable') and amount_obj.amount_in_stable is not None:
         return amount_obj.amount_in_stable
     return default
-
-
-def _filter_pools_by_token(pools: list, token_address: str) -> list:
-    """Filter pools that contain a specific token."""
-    return [p for p in pools if p.token0.token_address == token_address or p.token1.token_address == token_address]
-
-
-def _filter_pools_by_pair(pools: list, token0_address: str, token1_address: str) -> list:
-    """Filter pools that contain a specific token pair."""
-    return [p for p in pools if (
-        (p.token0.token_address == token0_address and p.token1.token_address == token1_address) or
-        (p.token0.token_address == token1_address and p.token1.token_address == token0_address)
-    )]
 
 
 def _convert_pools_to_swap_format(pools: list) -> list:
@@ -72,50 +60,6 @@ def _convert_pools_to_swap_format(pools: list) -> list:
     return result
 
 
-async def query_sugar_get_pools(
-    limit: int = 30,
-    offset: int = 0,
-    chainId: str = "8453",
-    use_cache: bool = True,
-) -> list:
-    """Retrieve all raw liquidity pools.
-
-    Args:
-        limit: The maximum number of pools to retrieve
-        offset: The starting point for pagination
-        chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
-        use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
-
-    Returns:
-        List[LiquidityPoolInfo]: A list of pool objects
-    """
-    validate_cache_parameter(use_cache, "query_sugar_get_pools")
-    pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
-    paginated_pools = pools[offset:offset + limit]
-    return [LiquidityPoolInfo.from_pool(p) for p in paginated_pools]
-
-
-async def query_sugar_get_pool_by_address(
-    address: str,
-    chainId: str = "8453",
-    use_cache: bool = True,
-) -> LiquidityPoolInfo | None:
-    """Retrieve a raw liquidity pool by its contract address.
-
-    Args:
-        address: The address of the liquidity pool contract
-        chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
-        use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
-
-    Returns:
-        Optional[LiquidityPoolInfo]: The matching LiquidityPool object, or None if not found
-    """
-    validate_cache_parameter(use_cache, "query_sugar_get_pool_by_address")
-    address = Web3.to_checksum_address(address)
-    pool = _get_pool_from_cache(chainId, address) if use_cache else _get_pool_from_chain(chainId, address)
-    return LiquidityPoolInfo.from_pool(pool) if pool else None
-
-
 async def query_sugar_get_pools_for_swaps(
     limit: int,
     offset: int,
@@ -145,89 +89,20 @@ async def query_sugar_get_pools_for_swaps(
     return [LiquidityPoolForSwapInfo.from_pool(p) for p in paginated_pools]
 
 
-async def query_sugar_get_pools_by_token(
-    token_address: str,
-    limit: int = 30,
-    offset: int = 0,
-    chainId: str = "8453",
-    use_cache: bool = True,
-) -> list | None:
-    """Retrieve liquidity pools that contain a specific token.
-
-    Args:
-        token_address: The address of the token to filter pools by
-        limit: The maximum number of pools to retrieve
-        offset: The starting point for pagination
-        chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
-        use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
-
-    Returns:
-        list[LiquidityPoolInfo] | None: A list of liquidity pool information or None if not found
-    """
-    validate_cache_parameter(use_cache, "query_sugar_get_pools_by_token")
-    token_address = Web3.to_checksum_address(token_address)
-    if not token_address:
-        raise ValueError("Token address must be provided.")
-
-    pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
-    if not pools:
-        return None
-
-    pools = _filter_pools_by_token(pools, token_address)
-    pools = sorted(pools, key=lambda p: p.tvl, reverse=True)
-    pools = pools[offset:offset+limit]
-    return [LiquidityPoolInfo.from_pool(p) for p in pools]
-
-
-async def query_sugar_get_pools_by_pair(
-    token0_address: str,
-    token1_address: str,
-    limit: int = 30,
-    offset: int = 0,
-    chainId: str = "8453",
-    use_cache: bool = True,
-) -> list | None:
-    """Retrieve liquidity pools that contain a specific token pair.
-
-    Args:
-        token0_address: The address of the first token in the pair
-        token1_address: The address of the second token in the pair
-        limit: The maximum number of pools to retrieve
-        offset: The starting point for pagination
-        chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
-        use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
-
-    Returns:
-        list[LiquidityPoolInfo] | None: A list of liquidity pool information or None if not found
-    """
-    validate_cache_parameter(use_cache, "query_sugar_get_pools_by_pair")
-    token0_address = Web3.to_checksum_address(token0_address)
-    token1_address = Web3.to_checksum_address(token1_address)
-    if not token0_address or not token1_address:
-        raise ValueError("Both token addresses must be provided.")
-
-    pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
-    if not pools:
-        return None
-
-    pools = _filter_pools_by_pair(pools, token0_address, token1_address)
-    pools = sorted(pools, key=lambda p: p.tvl, reverse=True)
-    pools = pools[offset:offset+limit]
-    return [LiquidityPoolInfo.from_pool(p) for p in pools]
-
-
 async def query_sugar_get_pool_list(
-    token_address_list: list[str] = None,
+    lp: Optional[str] = None,
+    token_address_list: Optional[list[str]] = None,
     pool_type: str = "all",
     sort_by: str = "tvl",
     limit: int = 30,
     offset: int = 0,
     chainId: str = "8453",
     use_cache: bool = True,
-) -> list | None:
+) -> Optional[list]:
     """Retrieve liquidity pools based on specified criteria.
 
     Args:
+        lp: Address of the liquidity pool
         token_address_list: List of token addresses to filter pools. Only one or two tokens are supported for filtering. If None, no token filtering is applied
         pool_type: The type of pools to retrieve ('v2', 'v3' or 'all')
         sort_by: The criterion to sort the pools by ('tvl', 'volume', or 'apr')
@@ -237,21 +112,27 @@ async def query_sugar_get_pool_list(
         use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
 
     Returns:
-        list[LiquidityPoolInfo] | None: A list of liquidity pool information or None if not found
+        Optional[list[LiquidityPoolInfo]]: A list of liquidity pool information or None if not found
     """
     validate_cache_parameter(use_cache, "query_sugar_get_pool_list")
+    if lp is not None:
+        lp = Web3.to_checksum_address(lp)
+        pool = _get_pool_from_cache(chainId, lp) if use_cache else _get_pool_from_chain(chainId, lp)
+        if pool is not None:
+            return [LiquidityPoolInfo.from_pool(pool)]
+
     pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
     if not pools:
         return None
 
     if token_address_list is not None:
         if len(token_address_list) == 1:
-            token_address = Web3.to_checksum_address(token_address_list[0])
-            pools = _filter_pools_by_token(pools, token_address)
+            pools = [p for p in pools if p.token0.token_address == token_address_list[0] or p.token1.token_address == token_address_list[0]]
         elif len(token_address_list) == 2:
-            token0_address = Web3.to_checksum_address(token_address_list[0])
-            token1_address = Web3.to_checksum_address(token_address_list[1])
-            pools = _filter_pools_by_pair(pools, token0_address, token1_address)
+            pools = [p for p in pools if (
+                (p.token0.token_address == token_address_list[0] and p.token1.token_address == token_address_list[1]) or
+                (p.token0.token_address == token_address_list[1] and p.token1.token_address == token_address_list[0])
+            )]
         else:
             raise ValueError("Only one or two tokens are supported for filtering.")
 

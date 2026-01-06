@@ -168,24 +168,11 @@ class PoolsCache:
 
         return valid_pools
 
-    def get_pool_by_address(self, chain_id: str, address: str) -> Optional[LiquidityPool]:
-        """Get a specific pool by address from cache.
+    def get_pool_by_address(self, chain_id: str, lp: str) -> Optional[LiquidityPool]:
+        """Get a specific pool by liquidity pool address from cache."""
 
-        Args:
-            chain_id (str): The chain ID
-            address (str): Pool contract address
-
-        Returns:
-            Optional[LiquidityPool]: The pool if found, None otherwise
-        """
         pools = self.get_pools(chain_id)
-        address_lower = address.lower()
-
-        for pool in pools:
-            if pool.lp.lower() == address_lower:
-                return pool
-
-        return None
+        return next((pool for pool in pools if pool.lp.lower() == lp.lower()), None)
 
     def _fetch_and_cache_pools(self, chain_id: str, timestamp: datetime) -> List[LiquidityPool]:
         """Fetch pools from chain and update cache."""

@@ -63,13 +63,13 @@ def ensure_test_env(required_vars: Optional[List[str]] = None, project_root: Opt
     
     Args:
         required_vars: List of required environment variable names.
-                      Defaults to ["BACKEND_URL", "COINGECKO_API_KEY"]
+                      Defaults to ["BACKEND_BASE_URL", "COINGECKO_API_KEY"]
         project_root: Project root directory for .env file location.
     """
     load_env_file(project_root=project_root)
     
     if required_vars is None:
-        required_vars = ["BACKEND_URL", "COINGECKO_API_KEY"]
+        required_vars = ["BACKEND_BASE_URL", "COINGECKO_API_KEY"]
     
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
     

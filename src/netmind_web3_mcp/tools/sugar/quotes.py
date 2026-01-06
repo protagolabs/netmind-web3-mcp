@@ -1,5 +1,6 @@
 """Sugar MCP quote-related tools."""
 
+from typing import Optional
 from netmind_sugar.chains import get_chain
 from .models import QuoteInfo
 from .cache import _get_cached_pools
@@ -13,7 +14,7 @@ async def query_sugar_get_quote(
     amount: int,
     chainId: str = "8453",
     use_cache: bool = True,
-) -> QuoteInfo | None:
+) -> Optional[QuoteInfo]:
     """Retrieve the best quote for swapping a given amount from one token to another.
 
     Args:

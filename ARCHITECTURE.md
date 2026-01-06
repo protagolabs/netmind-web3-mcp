@@ -8,14 +8,22 @@ src/netmind_web3_mcp/
 ├── server.py                # Main server file (registers tools and starts service)
 └── tools/                   # Tools module directory
     ├── __init__.py          # Tools package exports
-    ├── backend/             # Backend API data source package
-    │   ├── __init__.py      # Package exports
-    │   ├── config.py        # Configuration management (environment variables, initialization)
-    │   └── token_address.py # Token address query tool
-    └── coingecko/           # CoinGecko API data source package
-        ├── __init__.py      # Package exports
-        ├── config.py        # Configuration management (environment variables, concurrency control, etc.)
-        └── market_data.py   # Market data query tool
+    ├── backend/             # Backend API data source
+    │   ├── __init__.py
+    │   ├── config.py        # Configuration management
+    │   ├── token_address.py # Token address query tool
+    │   └── news.py          # News query tool
+    ├── coingecko/           # CoinGecko API data source
+    │   ├── __init__.py
+    │   ├── config.py        # Configuration & concurrency control
+    │   └── market_data.py   # Market data, traders, trades tools
+    └── sugar/               # Sugar DeFi data source
+        ├── __init__.py
+        ├── config.py
+        ├── cache.py         # Cache system
+        ├── tokens.py        # Token queries
+        ├── pools.py         # Pool queries
+        └── quotes.py        # Swap quotes
 ```
 
 ## Design Principles
@@ -45,7 +53,7 @@ To add a new data source, simply:
 ### Backend Configuration (`tools/backend/config.py`)
 
 **Environment Variables**:
-- `BACKEND_URL` (required): Backend API base URL
+- `BACKEND_BASE_URL` (required): Backend API base URL
 - `BACKEND_TIMEOUT` (optional): Request timeout, default 10.0 seconds
 
 **Features**:

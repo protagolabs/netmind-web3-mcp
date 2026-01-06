@@ -110,9 +110,16 @@ async def main():
                     #     "name": "query_token_addressList",
                     #     "tool": "query_token_addressList",
                     #     "args": {
-                    #         "tokenName": "USDT"
+                    #         "token_symbol": "USDT"
                     #     }
                     # },
+                    {   
+                        "name": "query_reply_by_news_summary",
+                        "tool": "query_reply_by_news_summary",
+                        "args": {
+                            "content": "Mask"
+                        }
+                    },
                     # {
                     #     "name": "query_coingecko_market_data (single coin)",
                     #     "tool": "query_coingecko_market_data",
@@ -196,14 +203,14 @@ async def main():
                     #          "chainId": "8453"
                     #     }
                     # },
-                    {
-                        "name": "query_sugar_get_pool_by_address",
-                        "tool": "query_sugar_get_pool_by_address",
-                        "args": {
-                            "address": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
-                            "chainId": "8453"
-                        }
-                    },
+                    # {
+                    #     "name": "query_sugar_get_pool_by_address",
+                    #     "tool": "query_sugar_get_pool_by_address",
+                    #     "args": {
+                    #         "address": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
+                    #         "chainId": "8453"
+                    #     }
+                    # },
                     # {
                     #     "name": "query_sugar_get_pools_for_swaps",
                     #     "tool": "query_sugar_get_pools_for_swaps",
@@ -213,23 +220,23 @@ async def main():
                     #         "chainId": "8453"
                     #     }
                     # },
-                    {
-                        "name": "query_sugar_get_pools_by_token",
-                        "tool": "query_sugar_get_pools_by_token",
-                        "args": {
-                            "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                            "chainId": "8453"
-                        }
-                    },
-                    {
-                        "name": "query_sugar_get_pools_by_pair",
-                        "tool": "query_sugar_get_pools_by_pair",
-                        "args": {
-                            "token0_address": "0x4200000000000000000000000000000000000006",
-                            "token1_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                            "chainId": "8453"
-                        }
-                    },  
+                    # {
+                    #     "name": "query_sugar_get_pools_by_token",
+                    #     "tool": "query_sugar_get_pools_by_token",
+                    #     "args": {
+                    #         "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    #         "chainId": "8453"
+                    #     }
+                    # },
+                    # {
+                    #     "name": "query_sugar_get_pools_by_pair",
+                    #     "tool": "query_sugar_get_pools_by_pair",
+                    #     "args": {
+                    #         "token0_address": "0x4200000000000000000000000000000000000006",
+                    #         "token1_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    #         "chainId": "8453"
+                    #     }
+                    # },  
                     # {
                     #     "name": "query_sugar_get_pool_list",
                     #     "tool": "query_sugar_get_pool_list",
