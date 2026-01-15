@@ -1,5 +1,6 @@
 """Sugar MCP pool-related tools."""
 
+from math import e
 from typing import Optional
 from netmind_sugar.chains import get_chain, LiquidityPool, LiquidityPoolForSwap
 from web3 import Web3
@@ -94,7 +95,7 @@ async def query_sugar_get_pool_list(
     token_address_list: Optional[list[str]] = None,
     pool_type: str = "all",
     sort_by: str = "tvl",
-    limit: int = 30,
+    limit: int = 10,
     offset: int = 0,
     chainId: str = "8453",
     use_cache: bool = True,
@@ -114,16 +115,18 @@ async def query_sugar_get_pool_list(
     Returns:
         Optional[list[LiquidityPoolInfo]]: A list of liquidity pool information or None if not found
     """
+    # limit is max 10
+    limit = min(limit, 10)
+    
     validate_cache_parameter(use_cache, "query_sugar_get_pool_list")
     if lp is not None:
         lp = Web3.to_checksum_address(lp)
         pool = _get_pool_from_cache(chainId, lp) if use_cache else _get_pool_from_chain(chainId, lp)
-        if pool is not None:
-            return [LiquidityPoolInfo.from_pool(pool)]
+        return [LiquidityPoolInfo.from_pool(pool)] if pool else []
 
     pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
     if not pools:
-        return None
+        return []
 
     if token_address_list is not None:
         if len(token_address_list) == 1:
@@ -172,7 +175,8 @@ async def query_sugar_get_latest_pool_epochs(
     """
     with get_chain(chainId) as chain:
         epochs = chain.get_latest_pool_epochs_page(limit, offset)
-        return [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs]
+        # Filter out None values in case the API returns None entries
+        return [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs if p is not None]
 
 
 async def query_sugar_get_pool_epochs(
@@ -195,5 +199,6 @@ async def query_sugar_get_pool_epochs(
     lp = Web3.to_checksum_address(lp)
     with get_chain(chainId) as chain:
         epochs = chain.get_pool_epochs_page(lp, offset, limit)
-        return [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs]
-
+        # Filter out None values in case the API returns None entries
+        return [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs if p is not None]
+    
