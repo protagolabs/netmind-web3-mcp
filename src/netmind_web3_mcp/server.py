@@ -24,7 +24,7 @@ from .tools.coingecko.config import CoinGeckoConfig
 from .tools.sugar.config import SugarConfig
 from .tools.sugar.cache import ensure_cache_system_started
 from .utils.env_loader import load_env_file
-
+from starlette.responses import JSONResponse
 
 def _create_mcp_instance():
     """Create FastMCP instance with configuration from environment variables.
@@ -75,6 +75,11 @@ def _validate_required_env_vars():
 # Module-level instance (for testing and import access)
 # Created when module is imported, using current environment variables
 mcp = _create_mcp_instance()
+
+
+@mcp.custom_route('/health', methods=['GET'])
+async def health_check(request):
+    return JSONResponse({"status": "ok"})
 
 
 def main():
