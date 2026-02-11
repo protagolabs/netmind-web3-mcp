@@ -95,16 +95,6 @@ def _validate_required_env_vars():
     SugarConfig.validate_required_env()
 
 
-# Module-level instance (for testing and import access)
-# Created when module is imported, using current environment variables
-mcp = _create_mcp_instance()
-
-
-@mcp.custom_route('/health', methods=['GET'])
-async def health_check(request):
-    return JSONResponse({"status": "ok"})
-
-
 def main():
     """Start the MCP server.
     
@@ -119,6 +109,10 @@ def main():
 
     # Recreate MCP instance after loading env so auth settings are applied
     mcp_instance = _create_mcp_instance()
+
+    @mcp_instance.custom_route('/health', methods=['GET'])
+    async def health_check(request):
+        return JSONResponse({"status": "ok"})
 
     _validate_required_env_vars()
     
