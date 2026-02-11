@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from .tools import (
     query_token_addressList,
@@ -23,7 +24,22 @@ from .tools.backend.config import BackendConfig
 from .tools.coingecko.config import CoinGeckoConfig
 from .tools.sugar.config import SugarConfig
 from .tools.sugar.cache import ensure_cache_system_started
+from .utils.auth import StaticTokenVerifier
 from .utils.env_loader import load_env_file
+from starlette.responses import JSONResponse
+
+def _build_auth_settings(host: str, port: int):
+    token = os.environ.get("MCP_AUTH_TOKEN", "").strip()
+    if not token:
+        return None, None
+
+    base_url = f"http://{host}:{port}"
+    auth_settings = AuthSettings(
+        issuer_url=base_url,
+        resource_server_url=base_url,
+    )
+    token_verifier = StaticTokenVerifier(token=token)
+    return auth_settings, token_verifier
 
 
 def _create_mcp_instance():
@@ -36,7 +52,14 @@ def _create_mcp_instance():
     host = os.environ.get("MCP_HOST", "127.0.0.1")
     port = int(os.environ.get("MCP_PORT", "8000"))
     
-    mcp = FastMCP("netmind-web3-mcp", host=host, port=port)
+    auth_settings, token_verifier = _build_auth_settings(host, port)
+    mcp = FastMCP(
+        "netmind-web3-mcp",
+        host=host,
+        port=port,
+        auth=auth_settings,
+        token_verifier=token_verifier,
+    )
     
     # Register backend tools
     mcp.tool()(query_token_addressList)
@@ -77,6 +100,11 @@ def _validate_required_env_vars():
 mcp = _create_mcp_instance()
 
 
+@mcp.custom_route('/health', methods=['GET'])
+async def health_check(request):
+    return JSONResponse({"status": "ok"})
+
+
 def main():
     """Start the MCP server.
     
@@ -88,14 +116,17 @@ def main():
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
     load_env_file(project_root=project_root)
-    
+
+    # Recreate MCP instance after loading env so auth settings are applied
+    mcp_instance = _create_mcp_instance()
+
     _validate_required_env_vars()
     
     # Eagerly initialize Sugar cache system on server startup
     ensure_cache_system_started()
     
     transport = os.environ.get("MCP_TRANSPORT", "sse")
-    mcp.run(transport=transport)
+    mcp_instance.run(transport=transport)
 
 
 if __name__ == "__main__":

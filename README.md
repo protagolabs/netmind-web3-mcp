@@ -28,7 +28,6 @@ All environment variables should be configured in the `.env` file in the project
 
 **Required:**
 
-
 - `BACKEND_BASE_URL`: The backend base URL (domain only, route path is appended in code).
 - `COINGECKO_API_KEY`: CoinGecko Pro API Key (format: CG-xxxxx).
 - `SUGAR_PK`: Private key for the Sugar service (required for Sugar tools).
@@ -36,10 +35,10 @@ All environment variables should be configured in the `.env` file in the project
 
 **Optional:**
 
-
 - `MCP_TRANSPORT`: Transport mode - "stdio" or "sse" (default: sse).
 - `MCP_HOST`: Server host for SSE transport (default: 127.0.0.1).
 - `MCP_PORT`: Server port for SSE transport (default: 8000).
+- `MCP_AUTH_TOKEN`: Shared bearer token for SSE/Streamable HTTP authentication.
 
 See `env.example` for all available configuration options.
 
@@ -59,10 +58,10 @@ See `env.example` for all available configuration options.
    ```bash
    python -m netmind_web3_mcp.server
    ```
+
    Server starts in SSE mode on `http://127.0.0.1:8000` by default.
 
 ## Usage
-
 
 **Basic usage:**
 
@@ -103,6 +102,20 @@ For SSE transport (remote connections), connect to the SSE endpoint:
 
 - Default: `http://127.0.0.1:8000/sse`
 - Custom: `http://your-host:your-port/sse`
+
+### Token Authentication (SSE/Streamable HTTP)
+
+If the server sets `MCP_AUTH_TOKEN`, clients must send an Authorization header:
+
+```http
+Authorization: Bearer <token>
+```
+
+Notes:
+
+- stdio transport does not support HTTP headers, so token auth only applies to SSE/Streamable HTTP.
+- For the included `test/test_sse.py`, set `MCP_CLIENT_AUTH_TOKEN` (or reuse `MCP_AUTH_TOKEN`).
+- To generate a short random token, run `python test/generate_token.py` and copy the output.
 
 ### Debugging with MCP Inspector
 

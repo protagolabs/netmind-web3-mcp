@@ -63,32 +63,18 @@ async def main():
             
             # Test cases
             test_cases = [
-                {
-                    "name": "query_coingecko_market_data (single coin)",
-                    "tool": "query_coingecko_market_data",
+                  {
+                    "name": "query_sugar_get_pool_list",
+                    "tool": "query_sugar_get_pool_list",
                     "args": {
-                        "ids": "bitcoin",
-                        "vs_currency": "usd",
-                        "price_change_percentage": "1h"
+                        "limit": 20,
+                        "offset": 0,
+                        "pool_type": "all",
+                        "sort_by": "tvl",
+                        "chainId": "8453",
+                        "use_cache": False
                     }
-                },
-                {
-                    "name": "query_coingecko_market_data (multiple coins)",
-                    "tool": "query_coingecko_market_data",
-                    "args": {
-                        "ids": "bitcoin,ethereum,solana",
-                        "vs_currency": "usd",
-                        "price_change_percentage": "1h,24h,7d"
-                    }
-                },
-                # Uncomment to test token address query
-                # {
-                #     "name": "query_token_addressList",
-                #     "tool": "query_token_addressList",
-                #     "args": {
-                #         "tokenName": "USDT"
-                #     }
-                # },
+                  }
             ]
             
             for test_case in test_cases:
