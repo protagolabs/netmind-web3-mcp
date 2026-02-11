@@ -4,6 +4,7 @@ This test connects to an SSE server (local or remote).
 Edit the SSE_URL variable below to point to your server.
 """
 
+from calendar import EPOCH
 import json
 import traceback
 import os
@@ -28,7 +29,7 @@ load_env_file(project_root=project_root)
 # Configuration: Edit this URL to point to your SSE server
 # ============================================================================
 # Default: Local server
-SSE_URL = "http://127.0.0.1:8000/sse"
+SSE_URL = "http://frps.netmind.ai:6027/sse"
 
 # Uncomment and set for remote server:
 # SSE_URL = "https://your-remote-server.com/sse"
@@ -36,6 +37,13 @@ SSE_URL = "http://127.0.0.1:8000/sse"
 # Or use environment variable to override:
 SSE_URL = os.environ.get("MCP_SSE_URL", SSE_URL)
 # ============================================================================
+
+def get_auth_headers() -> dict[str, str]:
+    """Return Authorization header if auth token is configured."""
+    token = os.environ.get("MCP_CLIENT_AUTH_TOKEN") or os.environ.get("MCP_AUTH_TOKEN")
+    if not token:
+        return {}
+    return {"Authorization": f"Bearer {token}"}
 
 
 async def check_server_connection(url: str) -> bool:
@@ -91,7 +99,7 @@ async def main():
         print("=" * 60)
     
     try:
-        async with sse_client(SSE_URL) as (read, write):
+        async with sse_client(SSE_URL, headers=get_auth_headers()) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 server_type = "local" if is_local_url(SSE_URL) else "remote"
@@ -101,149 +109,20 @@ async def main():
                 response = await session.list_tools()
                 tools = [dict(t) for t in response.tools]
                 print(f"\n📋 Available tools: {len(tools)}")
-                for tool in tools:
-                    print(f"  - {tool['name']}: {tool.get('description', 'No description')[:60]}...")
+                # for tool in tools:
+                #     print(f"  - {tool['name']}: {tool.get('description', 'No description')[:60]}...")
                 
                 # Test cases
                 test_cases = [
-                    # {
-                    #     "name": "query_token_addressList",
-                    #     "tool": "query_token_addressList",
-                    #     "args": {
-                    #         "token_symbol": "USDT"
-                    #     }
-                    # },
-                    {   
-                        "name": "query_reply_by_news_summary",
-                        "tool": "query_reply_by_news_summary",
+                    {
+                        "name": "query_sugar_get_pool_list",
+                        "tool": "query_sugar_get_pool_list",
                         "args": {
-                            "content": "Mask"
-                        }
-                    },
-                    # {
-                    #     "name": "query_coingecko_market_data (single coin)",
-                    #     "tool": "query_coingecko_market_data",
-                    #     "args": {
-                    #         "ids": "bitcoin",
-                    #         "vs_currency": "usd",
-                    #         "price_change_percentage": "1h"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_coingecko_market_data (multiple coins)",
-                    #     "tool": "query_coingecko_market_data",
-                    #     "args": {
-                    #         "ids": "bitcoin,ethereum,solana,cardano,polkadot",
-                    #         "vs_currency": "usd",
-                    #         "price_change_percentage": "1h,24h,7d"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_quote",
-                    #     "tool": "query_sugar_get_quote",
-                    #     "args": {
-                    #         "from_token": "usdc",
-                    #         "to_token": "aero",
-                    #         "amount": 1000000000000000,
-                    #         "chainId": "8453",
-                    #         "use_cache": True
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_token_list",
-                    #     "tool": "query_sugar_get_all_tokens",
-                    #     "args": {
-                    #         "limit": 10,
-                    #         "offset": 0,
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_token_prices",
-                    #     "tool": "query_sugar_get_token_prices",
-                    #     "args": {
-                    #         "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_prices",
-                    #     "tool": "query_sugar_get_prices",
-                    #     "args": {
-                    #         "limit": 10,
-                    #         "offset": 0,
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_latest_pool_epochs",
-                    #     "tool": "query_sugar_get_latest_pool_epochs",
-                    #     "args": {
-                    #         "offset": 0,
-                    #         "limit": 10,
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pool_epochs",
-                    #     "tool": "query_sugar_get_pool_epochs",
-                    #     "args": {
-                    #         "lp": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
-                    #         "offset": 0,
-                    #         "limit": 10,    
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pools",
-                    #     "tool": "query_sugar_get_pools",
-                    #     "args": {
-                    #          "limit": 10,   
-                    #          "offset": 0,
-                    #          "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pool_by_address",
-                    #     "tool": "query_sugar_get_pool_by_address",
-                    #     "args": {
-                    #         "address": "0x2722C8f9B5E2aC72D1f225f8e8c990E449ba0078",
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pools_for_swaps",
-                    #     "tool": "query_sugar_get_pools_for_swaps",
-                    #     "args": {
-                    #         "limit": 10,
-                    #         "offset": 0,
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pools_by_token",
-                    #     "tool": "query_sugar_get_pools_by_token",
-                    #     "args": {
-                    #         "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                    #         "chainId": "8453"
-                    #     }
-                    # },
-                    # {
-                    #     "name": "query_sugar_get_pools_by_pair",
-                    #     "tool": "query_sugar_get_pools_by_pair",
-                    #     "args": {
-                    #         "token0_address": "0x4200000000000000000000000000000000000006",
-                    #         "token1_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                    #         "chainId": "8453"
-                    #     }
-                    # },  
-                    # {
-                    #     "name": "query_sugar_get_pool_list",
-                    #     "tool": "query_sugar_get_pool_list",
-                    #     "args": {
-                    #         "chainId": "8453"
-                    #     }
-                    # }
+                            "lp": "0x1524a14c55f097bb54f0b24383f3ae3e3743804a",
+                            "chainId": "8453",
+                            "use_cache": False
+                        },
+                    }
                 ]
                 
                 for test_case in test_cases:
