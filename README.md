@@ -115,6 +115,7 @@ Notes:
 
 - stdio transport does not support HTTP headers, so token auth only applies to SSE/Streamable HTTP.
 - For the included `test/test_sse.py`, set `MCP_CLIENT_AUTH_TOKEN` (or reuse `MCP_AUTH_TOKEN`).
+- To generate a short random token, run `python test/generate_token.py` and copy the output.
 
 ### Debugging with MCP Inspector
 
