@@ -66,7 +66,7 @@ async def query_sugar_get_pools_for_swaps(
     offset: int,
     chainId: str = "8453",
     use_cache: bool = True,
-) -> Optional[list]:
+) -> list | str:
     """Retrieve all raw liquidity pools suitable for swaps.
 
     Args:
@@ -76,7 +76,7 @@ async def query_sugar_get_pools_for_swaps(
         use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
 
     Returns:
-        Optional[List[LiquidityPoolForSwapInfo]]: A list of simplified pool objects for swaps or None if not found
+        List[LiquidityPoolForSwapInfo] | str: A list of simplified pool objects for swaps or "Not Find"
     """
     validate_cache_parameter(use_cache, "query_sugar_get_pools_for_swaps")
     pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
@@ -102,7 +102,7 @@ async def query_sugar_get_pool_list(
     offset: int = 0,
     chainId: str = "8453",
     use_cache: bool = True,
-) -> Optional[list]:
+) -> list | str:
     """Retrieve liquidity pools based on specified criteria.
 
     Args:
@@ -116,7 +116,7 @@ async def query_sugar_get_pool_list(
         use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
 
     Returns:
-        Optional[list[LiquidityPoolInfo]]: A list of liquidity pool information or None if not found
+        list[LiquidityPoolInfo] | str: A list of liquidity pool information or "Not Find"
     """
     # limit is max 10
     limit = min(limit, 10)
@@ -167,7 +167,7 @@ async def query_sugar_get_latest_pool_epochs(
     offset: int,
     limit: int = 10,
     chainId: str = "8453",
-) -> Optional[list]:
+) -> list | str:
     """Retrieve the latest epoch data for all pools.
 
     Args:
@@ -176,7 +176,7 @@ async def query_sugar_get_latest_pool_epochs(
         chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
 
     Returns:
-        Optional[List[LiquidityPoolEpochInfo]]: A list of the most recent epochs across all pools or None if not found
+        List[LiquidityPoolEpochInfo] | str: A list of epochs or "Not Find"
     """
     with get_chain(chainId) as chain:
         epochs = chain.get_latest_pool_epochs_page(limit, offset)
@@ -192,7 +192,7 @@ async def query_sugar_get_pool_epochs(
     offset: int = 0,
     limit: int = 10,
     chainId: str = "8453",
-) -> Optional[list]:
+) -> list | str:
     """Retrieve historical epoch data for a given liquidity pool.
 
     Args:
@@ -202,7 +202,7 @@ async def query_sugar_get_pool_epochs(
         chainId: The chain ID to use ('10' for OPChain, '8453' for BaseChain, '130' for Unichain, '1135' for List)
 
     Returns:
-        Optional[List[LiquidityPoolEpochInfo]]: A list of epoch entries for the specified pool or None if not found
+        List[LiquidityPoolEpochInfo] | str: A list of epoch entries or "Not Find"
     """
     lp = Web3.to_checksum_address(lp)
     with get_chain(chainId) as chain:
