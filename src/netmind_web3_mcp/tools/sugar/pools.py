@@ -8,6 +8,7 @@ from .models import (
     LiquidityPoolInfo,
     LiquidityPoolForSwapInfo,
     LiquidityPoolEpochInfo,
+    QuerySugarGetPoolListOutput,
 )
 from .cache import (
     _get_cached_pools,
@@ -102,7 +103,7 @@ async def query_sugar_get_pool_list(
     offset: int = 0,
     chainId: str = "8453",
     use_cache: bool = True,
-) -> list | str:
+) -> QuerySugarGetPoolListOutput:
     """Retrieve liquidity pools based on specified criteria.
 
     Args:
@@ -116,7 +117,7 @@ async def query_sugar_get_pool_list(
         use_cache: Whether to use cached data. Defaults to True. Not available in stdio mode.
 
     Returns:
-        list[LiquidityPoolInfo] | str: A list of liquidity pool information or "Not Find"
+        QuerySugarGetPoolListOutput: result is list of LiquidityPoolInfo, or "NOT FIND" when no pools match
     """
     # limit is max 10
     limit = min(limit, 10)
@@ -125,11 +126,13 @@ async def query_sugar_get_pool_list(
     if lp is not None:
         lp = Web3.to_checksum_address(lp)
         pool = _get_pool_from_cache(chainId, lp) if use_cache else _get_pool_from_chain(chainId, lp)
-        return [LiquidityPoolInfo.from_pool(pool)] if pool else "Not Find"
+        if pool:
+            return QuerySugarGetPoolListOutput(result=[LiquidityPoolInfo.from_pool(pool)])
+        return QuerySugarGetPoolListOutput(result="NOT FIND")
 
     pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
     if not pools:
-        return "Not Find"
+        return QuerySugarGetPoolListOutput(result="NOT FIND")
 
     if token_address_list is not None:
         if len(token_address_list) == 1:
@@ -159,8 +162,8 @@ async def query_sugar_get_pool_list(
 
     pools = pools[offset:offset+limit]
     if not pools:
-        return "Not Find"
-    return [LiquidityPoolInfo.from_pool(p) for p in pools]
+        return QuerySugarGetPoolListOutput(result="NOT FIND")
+    return QuerySugarGetPoolListOutput(result=[LiquidityPoolInfo.from_pool(p) for p in pools])
 
 
 async def query_sugar_get_latest_pool_epochs(

@@ -176,32 +176,54 @@ class PoolsCache:
 
     def _fetch_and_cache_pools(self, chain_id: str, timestamp: datetime) -> List[LiquidityPool]:
         """Fetch pools from chain and update cache."""
+        def _preserve_or_expire(reason: str) -> List[LiquidityPool]:
+            """Preserve existing cache on bad result; if none exists, set expired so next call retries."""
+            with self.lock:
+                existing = self.cache.get(chain_id, {}).get("pools", [])
+                if existing:
+                    print(f"Warning: {reason} for chain {chain_id}, keeping {len(existing)} existing cached pools")
+                else:
+                    print(f"Warning: {reason} for chain {chain_id}, no previous cache available")
+                    self.cache[chain_id] = {
+                        "pools": [],
+                        "last_updated": datetime.min  # expired immediately so next call retries
+                    }
+            return existing
+
         try:
             with get_chain(chain_id) as chain:
                 pools = chain.get_pools()
 
-            # Validate the result
+            # Validate the result type
             if not isinstance(pools, list):
-                print(f"Warning: chain.get_pools() returned {type(pools)} instead of list for chain {chain_id}")
-                pools = []
+                return _preserve_or_expire(f"chain.get_pools() returned {type(pools)} instead of list")
 
             # Filter invalid pools
             pools = self._filter_invalid_pools(pools)
 
-            self.cache[chain_id] = {
-                "pools": pools,
-                "last_updated": timestamp
-            }
+            # If filtering removed all pools, preserve old cache rather than writing empty
+            if not pools:
+                return _preserve_or_expire("all pools were filtered out (possible data quality issue)")
+
+            with self.lock:
+                self.cache[chain_id] = {
+                    "pools": pools,
+                    "last_updated": timestamp
+                }
 
             return pools
         except Exception as e:
             print(f"Failed to fetch and cache pools for chain {chain_id}: {type(e).__name__}: {str(e)}")
-            # Cache empty list to avoid repeated failures
-            self.cache[chain_id] = {
-                "pools": [],
-                "last_updated": timestamp
-            }
-            return []
+            # On failure, preserve existing cached data (even if stale) to avoid returning empty results.
+            # Only initialize an empty entry if there is no previous cache at all.
+            with self.lock:
+                existing = self.cache.get(chain_id, {}).get("pools", [])
+                if not existing:
+                    self.cache[chain_id] = {
+                        "pools": [],
+                        "last_updated": datetime.min  # expired immediately so next call retries
+                    }
+            return existing
 
     def start_background_updates(self):
         """Start the background update thread."""
@@ -311,14 +333,17 @@ class PoolsCache:
             if needs_update:
                 try:
                     with self._get_fetch_lock(chain_id):
-                        # Double-check after acquiring fetch lock
+                        # Double-check after acquiring fetch lock; release lock before network I/O
+                        should_fetch = False
                         with self.lock:
                             if chain_id in self.cache:
                                 cache_entry = self.cache[chain_id]
                                 now = datetime.now()
                                 if now - cache_entry["last_updated"] >= self.cache_duration:
-                                    self._fetch_and_cache_pools(chain_id, now)
-                                    updated_count += 1
+                                    should_fetch = True
+                        if should_fetch:
+                            self._fetch_and_cache_pools(chain_id, datetime.now())
+                            updated_count += 1
                 except Exception as e:
                     print(f"Error updating cache for chain {chain_id}: {type(e).__name__}: {str(e)}")
 

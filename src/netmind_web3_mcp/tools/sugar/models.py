@@ -1,6 +1,6 @@
 """Data models for Sugar MCP tools."""
 
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 from pydantic import Field, BaseModel
 from netmind_sugar.chains import Token, Price, LiquidityPool, Quote, LiquidityPoolForSwap
 from netmind_sugar.pool import Amount, LiquidityPoolEpoch
@@ -125,6 +125,15 @@ class LiquidityPoolInfo(BaseModel):
             gauge_staked_pct=(p.gauge_total_supply / p.total_supply * 100 if p.total_supply > 0 else 0),
             apr=p.apr
         )
+
+
+class QuerySugarGetPoolListOutput(BaseModel):
+    """Output for query_sugar_get_pool_list. result is list of pools or 'NOT FIND' when none match."""
+
+    result: Union[List[LiquidityPoolInfo], str] = Field(
+        ...,
+        description="List of liquidity pool info, or 'NOT FIND' when no pools match",
+    )
 
 
 class LiquidityPoolForSwapInfo(BaseModel):
