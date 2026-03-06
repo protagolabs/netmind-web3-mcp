@@ -135,12 +135,13 @@ async def query_sugar_get_pool_list(
         return QuerySugarGetPoolListOutput(result="NOT FIND")
 
     if token_address_list is not None:
+        token_address_list = [a.lower() for a in token_address_list]
         if len(token_address_list) == 1:
-            pools = [p for p in pools if p.token0.token_address == token_address_list[0] or p.token1.token_address == token_address_list[0]]
+            pools = [p for p in pools if p.token0.token_address.lower() == token_address_list[0] or p.token1.token_address.lower() == token_address_list[0]]
         elif len(token_address_list) == 2:
             pools = [p for p in pools if (
-                (p.token0.token_address == token_address_list[0] and p.token1.token_address == token_address_list[1]) or
-                (p.token0.token_address == token_address_list[1] and p.token1.token_address == token_address_list[0])
+                (p.token0.token_address.lower() == token_address_list[0] and p.token1.token_address.lower() == token_address_list[1]) or
+                (p.token0.token_address.lower() == token_address_list[1] and p.token1.token_address.lower() == token_address_list[0])
             )]
         else:
             raise ValueError("Only one or two tokens are supported for filtering.")
