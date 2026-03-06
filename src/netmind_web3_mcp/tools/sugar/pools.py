@@ -79,17 +79,24 @@ async def query_sugar_get_pools_for_swaps(
         List[LiquidityPoolForSwapInfo] | str: A list of simplified pool objects for swaps or "Not Find"
     """
     validate_cache_parameter(use_cache, "query_sugar_get_pools_for_swaps")
-    pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
-    
+    if use_cache:
+        pools = _get_cached_pools(chainId)
+    else:
+        try:
+            pools = _get_pools_from_chain(chainId)
+        except Exception as e:
+            return f"Not Find: chain {chainId} fetch error — {type(e).__name__}: {e}"
+
     if not pools:
-        return "Not Find"
-    
+        return f"Not Find: no pools returned from chain {chainId}"
+
     pools_for_swap = _convert_pools_to_swap_format(pools)
+    total = len(pools_for_swap)
     paginated_pools = pools_for_swap[offset:offset + limit]
-    
+
     result = [LiquidityPoolForSwapInfo.from_pool(p) for p in paginated_pools]
     if not result:
-        return "Not Find"
+        return f"Not Find: offset {offset} exceeds available pools (total {total})"
     return result
 
 
@@ -124,34 +131,50 @@ async def query_sugar_get_pool_list(
     validate_cache_parameter(use_cache, "query_sugar_get_pool_list")
     if lp is not None:
         lp = Web3.to_checksum_address(lp)
-        pool = _get_pool_from_cache(chainId, lp) if use_cache else _get_pool_from_chain(chainId, lp)
+        if use_cache:
+            pool = _get_pool_from_cache(chainId, lp)
+        else:
+            try:
+                pool = _get_pool_from_chain(chainId, lp)
+            except Exception as e:
+                return QuerySugarGetPoolListOutput(result=f"NOT FIND: chain {chainId} fetch error — {type(e).__name__}: {e}")
         if pool:
             return QuerySugarGetPoolListOutput(result=[LiquidityPoolInfo.from_pool(pool)])
-        return QuerySugarGetPoolListOutput(result="NOT FIND")
+        return QuerySugarGetPoolListOutput(result=f"NOT FIND: pool address {lp} not found on chain {chainId}")
 
-    pools = _get_cached_pools(chainId) if use_cache else _get_pools_from_chain(chainId)
+    if use_cache:
+        pools = _get_cached_pools(chainId)
+    else:
+        try:
+            pools = _get_pools_from_chain(chainId)
+        except Exception as e:
+            return QuerySugarGetPoolListOutput(result=f"NOT FIND: chain {chainId} fetch error — {type(e).__name__}: {e}")
     if not pools:
-        return QuerySugarGetPoolListOutput(result="NOT FIND")
+        return QuerySugarGetPoolListOutput(result=f"NOT FIND: no pools returned from chain {chainId}")
 
     if token_address_list is not None:
-        # Validate and normalize to checksum format, then compare in lowercase
-        # to be robust regardless of what format the cached pool addresses use
         token_address_list = [Web3.to_checksum_address(a).lower() for a in token_address_list]
         if len(token_address_list) == 1:
             pools = [p for p in pools if p.token0.token_address.lower() == token_address_list[0] or p.token1.token_address.lower() == token_address_list[0]]
+            if not pools:
+                return QuerySugarGetPoolListOutput(result=f"NOT FIND: no pools contain token {token_address_list[0]} on chain {chainId}")
         elif len(token_address_list) == 2:
             pools = [p for p in pools if (
                 (p.token0.token_address.lower() == token_address_list[0] and p.token1.token_address.lower() == token_address_list[1]) or
                 (p.token0.token_address.lower() == token_address_list[1] and p.token1.token_address.lower() == token_address_list[0])
             )]
+            if not pools:
+                return QuerySugarGetPoolListOutput(result=f"NOT FIND: no pools with token pair ({token_address_list[0]}, {token_address_list[1]}) on chain {chainId}")
         else:
             raise ValueError("Only one or two tokens are supported for filtering.")
 
     if pool_type not in ["v2", "v3", "all"]:
         raise ValueError("Unsupported pool_type. Use 'v2', 'v3', or 'all'.")
-    
+
     if pool_type != "all":
         pools = [p for p in pools if (pool_type == "v3") == p.is_cl]
+        if not pools:
+            return QuerySugarGetPoolListOutput(result=f"NOT FIND: no {pool_type} pools found on chain {chainId}")
 
     sort_keys = {
         "tvl": lambda p: p.tvl if p.tvl is not None else 0.0,
@@ -162,9 +185,10 @@ async def query_sugar_get_pool_list(
         raise ValueError("Unsupported sort_by criteria. Use 'tvl', 'volume', or 'apr'.")
     pools.sort(key=sort_keys[sort_by], reverse=True)
 
-    pools = pools[offset:offset+limit]
+    total = len(pools)
+    pools = pools[offset:offset + limit]
     if not pools:
-        return QuerySugarGetPoolListOutput(result="NOT FIND")
+        return QuerySugarGetPoolListOutput(result=f"NOT FIND: offset {offset} exceeds available pools (total {total})")
     return QuerySugarGetPoolListOutput(result=[LiquidityPoolInfo.from_pool(p) for p in pools])
 
 

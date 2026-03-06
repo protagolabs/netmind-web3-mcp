@@ -61,18 +61,13 @@ class PoolsCache:
         Returns:
             List[LiquidityPool]: The cached pools data
         """
-        # If enabled_chain_ids is set and chain_id is not in the list, fetch directly without caching
+        # If enabled_chain_ids is set and chain_id is not in the list, fetch directly without caching or filtering
         if self.enabled_chain_ids is not None and chain_id not in self.enabled_chain_ids:
-            try:
-                with get_chain(chain_id) as chain:
-                    result = chain.get_pools()
-                    if not isinstance(result, list):
-                        print(f"Warning: chain.get_pools() returned {type(result)} instead of list for chain {chain_id}")
-                        return []
-                    return self._filter_invalid_pools(result)
-            except Exception as e:
-                print(f"Failed to get pools from chain {chain_id}: {type(e).__name__}: {str(e)}")
-                return []
+            with get_chain(chain_id) as chain:
+                result = chain.get_pools()
+                if not isinstance(result, list):
+                    raise TypeError(f"chain.get_pools() returned {type(result)} instead of list")
+                return result
 
         # Use double-checked locking with per-chain fetch locks to prevent cache storms
         with self.lock:
@@ -379,30 +374,26 @@ def _get_pool_from_cache(chain_id: str, address: str) -> Optional[LiquidityPool]
 
 
 def _get_pools_from_chain(chain_id: str) -> List[LiquidityPool]:
-    """Get pools directly from chain without using cache."""
-    try:
-        with get_chain(chain_id) as chain:
-            result = chain.get_pools()
-            # Ensure we got a list back
-            if not isinstance(result, list):
-                print(f"Warning: chain.get_pools() returned {type(result)} instead of list for chain {chain_id}")
-                return []
-            # Filter invalid pools
-            filtered_result = _cache._filter_invalid_pools(result)
-            return filtered_result
-    except Exception as e:
-        print(f"Failed to get pools from chain {chain_id}: {type(e).__name__}: {str(e)}")
-        return []
+    """Get pools directly from chain without using cache or filtering.
+
+    Raises:
+        Exception: propagates any chain/network error so callers can report the real cause.
+    """
+    with get_chain(chain_id) as chain:
+        result = chain.get_pools()
+        if not isinstance(result, list):
+            raise TypeError(f"chain.get_pools() returned {type(result)} instead of list")
+        return result
 
 
 def _get_pool_from_chain(chain_id: str, address: str) -> Optional[LiquidityPool]:
-    """Get a specific pool directly from chain without using cache."""
-    try:
-        with get_chain(chain_id) as chain:
-            return chain.get_pool_by_address(address)
-    except Exception as e:
-        print(f"Failed to get pool {address} from chain {chain_id}: {type(e).__name__}: {str(e)}")
-        return None
+    """Get a specific pool directly from chain without using cache.
+
+    Raises:
+        Exception: propagates any chain/network error so callers can report the real cause.
+    """
+    with get_chain(chain_id) as chain:
+        return chain.get_pool_by_address(address)
 
 
 def start_background_updates():
