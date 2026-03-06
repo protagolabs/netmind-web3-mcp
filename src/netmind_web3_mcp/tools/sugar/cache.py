@@ -69,7 +69,7 @@ class PoolsCache:
                     if not isinstance(result, list):
                         print(f"Warning: chain.get_pools() returned {type(result)} instead of list for chain {chain_id}")
                         return []
-                    return result
+                    return self._filter_invalid_pools(result)
             except Exception as e:
                 print(f"Failed to get pools from chain {chain_id}: {type(e).__name__}: {str(e)}")
                 return []

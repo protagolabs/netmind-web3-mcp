@@ -1,6 +1,5 @@
 """Sugar MCP pool-related tools."""
 
-from math import e
 from typing import Optional
 from netmind_sugar.chains import get_chain, LiquidityPool, LiquidityPoolForSwap
 from web3 import Web3
@@ -135,7 +134,9 @@ async def query_sugar_get_pool_list(
         return QuerySugarGetPoolListOutput(result="NOT FIND")
 
     if token_address_list is not None:
-        token_address_list = [a.lower() for a in token_address_list]
+        # Validate and normalize to checksum format, then compare in lowercase
+        # to be robust regardless of what format the cached pool addresses use
+        token_address_list = [Web3.to_checksum_address(a).lower() for a in token_address_list]
         if len(token_address_list) == 1:
             pools = [p for p in pools if p.token0.token_address.lower() == token_address_list[0] or p.token1.token_address.lower() == token_address_list[0]]
         elif len(token_address_list) == 2:
@@ -153,9 +154,9 @@ async def query_sugar_get_pool_list(
         pools = [p for p in pools if (pool_type == "v3") == p.is_cl]
 
     sort_keys = {
-        "tvl": lambda p: p.tvl,
+        "tvl": lambda p: p.tvl if p.tvl is not None else 0.0,
         "volume": lambda p: _safe_get_amount_in_stable(p.volume),
-        "apr": lambda p: p.apr,
+        "apr": lambda p: p.apr if p.apr is not None else 0.0,
     }
     if sort_by not in sort_keys:
         raise ValueError("Unsupported sort_by criteria. Use 'tvl', 'volume', or 'apr'.")
@@ -184,8 +185,14 @@ async def query_sugar_get_latest_pool_epochs(
     """
     with get_chain(chainId) as chain:
         epochs = chain.get_latest_pool_epochs_page(limit, offset)
-        # Filter out None values in case the API returns None entries
-        result = [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs if p is not None]
+        result = []
+        for p in epochs:
+            if p is None:
+                continue
+            try:
+                result.append(LiquidityPoolEpochInfo.from_epoch(p))
+            except Exception as e:
+                print(f"Skipping epoch with invalid pool data: {type(e).__name__}: {e}")
         if not result:
             return "Not Find"
         return result
@@ -211,8 +218,14 @@ async def query_sugar_get_pool_epochs(
     lp = Web3.to_checksum_address(lp)
     with get_chain(chainId) as chain:
         epochs = chain.get_pool_epochs_page(lp, offset, limit)
-        # Filter out None values in case the API returns None entries
-        result = [LiquidityPoolEpochInfo.from_epoch(p) for p in epochs if p is not None]
+        result = []
+        for p in epochs:
+            if p is None:
+                continue
+            try:
+                result.append(LiquidityPoolEpochInfo.from_epoch(p))
+            except Exception as e:
+                print(f"Skipping epoch with invalid pool data: {type(e).__name__}: {e}")
         if not result:
             return "Not Find"
         return result
