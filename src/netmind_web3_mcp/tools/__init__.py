@@ -1,5 +1,7 @@
 """Tools package for netmind-web3-mcp."""
 
+from .report import report_agent_operation
+
 from .backend import (
     query_token_addressList,
     query_reply_by_news_summary,
@@ -23,6 +25,7 @@ from .sugar import (
 )
 
 __all__ = [
+    "report_agent_operation",
     "query_token_addressList",
     "query_reply_by_news_summary",  
     "query_coingecko_market_data",

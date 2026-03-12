@@ -5,6 +5,7 @@ from pathlib import Path
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from .tools import (
+    report_agent_operation,
     query_token_addressList,
     query_reply_by_news_summary,
     query_coingecko_market_data,
@@ -61,6 +62,9 @@ def _create_mcp_instance():
         token_verifier=token_verifier,
     )
     
+    # Register report tools
+    mcp.tool()(report_agent_operation)
+
     # Register backend tools
     mcp.tool()(query_token_addressList)
     mcp.tool()(query_reply_by_news_summary)
