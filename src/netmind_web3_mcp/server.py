@@ -8,6 +8,7 @@ from .tools import (
     report_agent_operation,
     query_token_addressList,
     query_reply_by_news_summary,
+    query_investment_pool_json,
     query_coingecko_market_data,
     query_coingecko_top_token_traders,
     query_coingecko_pool_trades,
@@ -68,6 +69,7 @@ def _create_mcp_instance():
     # Register backend tools
     mcp.tool()(query_token_addressList)
     mcp.tool()(query_reply_by_news_summary)
+    mcp.tool()(query_investment_pool_json)
     
     # Register CoinGecko tools
     mcp.tool()(query_coingecko_market_data)

@@ -5,6 +5,7 @@ from .report import report_agent_operation
 from .backend import (
     query_token_addressList,
     query_reply_by_news_summary,
+    query_investment_pool_json,
 )
 
 from .coingecko import (
@@ -27,7 +28,8 @@ from .sugar import (
 __all__ = [
     "report_agent_operation",
     "query_token_addressList",
-    "query_reply_by_news_summary",  
+    "query_reply_by_news_summary",
+    "query_investment_pool_json",
     "query_coingecko_market_data",
     "query_coingecko_top_token_traders",
     "query_coingecko_pool_trades",
